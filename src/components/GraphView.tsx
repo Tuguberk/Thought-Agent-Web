@@ -49,6 +49,14 @@ export function GraphView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const [isGraphReady, setIsGraphReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsGraphReady(true);
+    }, 500); // Wait for initial layout transition
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleToggleLonelyKeywords = () => {
     setIsLoading(true);
@@ -148,7 +156,7 @@ export function GraphView({
   useEffect(() => {
     if (data.nodes.length > 0 && fgRef.current) {
       setTimeout(() => {
-        fgRef.current.zoomToFit(1000, 50);
+        fgRef.current.zoomToFit(1000, 150);
       }, 200);
     }
   }, [data]);
@@ -158,7 +166,7 @@ export function GraphView({
       ref={containerRef}
       className="relative flex-1 h-full bg-background overflow-hidden border-l border-white/5"
     >
-      <ForceGraph2D
+      {isGraphReady && <ForceGraph2D
         ref={fgRef}
         width={dimensions.width}
         height={dimensions.height}
@@ -168,8 +176,8 @@ export function GraphView({
         }
         nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D) => {
           const label = node.name;
-          const fontSize = 3.5;
-          const r = Math.sqrt(node.val || 1) * 4;
+          const fontSize = 2.5;
+          const r = Math.sqrt(node.val || 1) * 2;
 
           const isKeyword = node.kind === "keyword";
 
@@ -185,7 +193,7 @@ export function GraphView({
           ctx.font = `${fontSize}px Inter, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
           ctx.fillText(label, node.x, node.y + r + 2);
         }}
         linkColor={() => "rgba(255,255,255,0.15)"}
@@ -195,8 +203,8 @@ export function GraphView({
         backgroundColor="#09090b" // bg-zinc-950 approx
         onNodeClick={(node: any) => onNodeClick(node.id)}
         cooldownTicks={100}
-        onEngineStop={() => fgRef.current?.zoomToFit(400)}
-      />
+        onEngineStop={() => fgRef.current?.zoomToFit(500, 200)}
+      />}
 
       <div className="absolute top-4 right-4 z-10 w-64 flex flex-col gap-2 pointer-events-none">
         <div className="pointer-events-auto rounded-xl bg-card/80 shadow-xl border border-white/5 backdrop-blur-md overflow-hidden transition-all duration-300">
