@@ -1,116 +1,141 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { NoteList } from "@/components/NoteList";
-import { NoteEditor } from "@/components/NoteEditor";
-import { GraphView } from "@/components/GraphView";
-import { Network, PanelRightClose, PanelRightOpen, Layout } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { ArrowRight, Brain, Share2, Sparkles, Zap } from "lucide-react";
 
-export default function Home() {
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [isGraphVisible, setIsGraphVisible] = useState(true);
+export default function LandingPage() {
+    return (
+        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30 selection:text-primary-foreground overflow-x-hidden">
 
-  const handleNoteUpdate = useCallback(() => {
-    setRefreshKey((prev) => prev + 1);
-  }, []);
+            {/* Navbar */}
+            <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-background/50 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-serif font-bold text-xl tracking-tight">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <Brain size={18} />
+                        </div>
+                        Thought Agent
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <Link
+                            href="/app"
+                            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium transition-all hover:scale-105"
+                        >
+                            Sign In
+                        </Link>
+                        <Link
+                            href="/app"
+                            className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group"
+                        >
+                            Launch App
+                            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                        </Link>
+                    </div>
+                </div>
+            </nav>
 
-  const handleNavigate = useCallback((id: string) => {
-    setSelectedNoteId(id);
-  }, []);
+            {/* Hero Section */}
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 flex flex-col items-center text-center overflow-hidden">
+                {/* Background Effects */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+                    <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse" style={{ animationDuration: '4s' }} />
+                    <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[128px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+                </div>
 
-  return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-      {/* Sidebar - Note List */}
-      <div className="w-80 shrink-0 z-20 shadow-xl shadow-black/5">
-        <NoteList
-          selectedId={selectedNoteId}
-          refreshKey={refreshKey}
-          onSelect={setSelectedNoteId}
-        />
-      </div>
+                <div className="relative z-10 max-w-4xl mx-auto space-y-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-muted-foreground mb-4 animate-fadeIn">
+                        <Sparkles size={12} className="text-yellow-400" />
+                        <span>Now with AI-Powered Graph Analysis</span>
+                    </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex min-w-0 relative">
-        {/* Editor Pane 
-            Hidden when no note is selected.
-            Visible (flex-1) when note is selected.
-        */}
-        <div className={cn(
-          "h-full transition-all duration-500 ease-in-out bg-background flex flex-col",
-          !selectedNoteId
-            ? "w-0 opacity-0 overflow-hidden"
-            : "flex-1 opacity-100"
-        )}>
-          {/* Only render Editor if selectedNoteId exists to prevent unnecessary mounting/fetching in hidden state 
-               However, keeping it mounted might be better for state preservation if needed, 
-               but for 'closing' effect, unmounting or hiding is fine. 
-               We use CSS hiding for transition effects.
-           */}
-          {selectedNoteId && (
-            <NoteEditor
-              noteId={selectedNoteId}
-              onNoteUpdate={handleNoteUpdate}
-              onNavigate={handleNavigate}
-              onClose={() => setSelectedNoteId(null)}
-            />
-          )}
+                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight font-serif bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 pb-2">
+                        Your Second Brain, <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-primary animate-gradient bg-[length:200%_auto]">Visualized.</span>
+                    </h1>
+
+                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                        Transform your scattered notes into a living knowledge graph.
+                        Thought Agent uses AI to automatically connect ideas, revealing hidden insights in your thinking.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                        <Link
+                            href="/app"
+                            className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2"
+                        >
+                            Get Started for Free
+                            <ArrowRight size={18} />
+                        </Link>
+                        <Link
+                            href="/demo"
+                            className="h-12 px-8 rounded-xl bg-secondary/50 hover:bg-secondary border border-white/5 text-base font-medium backdrop-blur-sm transition-all text-muted-foreground hover:text-foreground flex items-center gap-2"
+                        >
+                            <Share2 size={18} />
+                            View Demo Graph
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Grid */}
+            <section className="py-24 px-6 bg-secondary/20 relative border-t border-white/5">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Feature 1 */}
+                        <div className="group p-8 rounded-3xl bg-card/30 border border-white/5 hover:bg-card/50 hover:border-primary/20 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform duration-300">
+                                <Share2 size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3 font-serif">Interactive Graph</h3>
+                            <p className="text-muted-foreground leading-relaxed">
+                                Navigate your thoughts topographically. See how concepts link together and discover clusters of knowledge you didn't know you had.
+                            </p>
+                        </div>
+
+                        {/* Feature 2 */}
+                        <div className="group p-8 rounded-3xl bg-card/30 border border-white/5 hover:bg-card/50 hover:border-purple-500/20 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                                <Zap size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3 font-serif">AI Auto-Linking</h3>
+                            <p className="text-muted-foreground leading-relaxed">
+                                Stop manually tagging. Our AI analyzes your content in real-time and suggests relevant connections to your existing knowledge base.
+                            </p>
+                        </div>
+
+                        {/* Feature 3 */}
+                        <div className="group p-8 rounded-3xl bg-card/30 border border-white/5 hover:bg-card/50 hover:border-blue-500/20 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                                <Brain size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3 font-serif">Contextual Rebuild</h3>
+                            <p className="text-muted-foreground leading-relaxed">
+                                Generate comprehensive summary nodes that aggregate information from related notes, giving you a high-level overview instantly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="py-12 px-6 border-t border-white/5 bg-background">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+                        <Brain size={16} />
+                        <span>© 2024 Thought Agent Inc.</span>
+                    </div>
+                    <div className="flex gap-8 text-sm text-muted-foreground">
+                        <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+                        <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+                        <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
+                        <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
+                    </div>
+                </div>
+            </footer>
+
         </div>
-
-        {/* Graph Pane 
-            Full width when no note is selected.
-            Sidebar width when note is selected.
-        */}
-        <div
-          className={cn(
-            "bg-gray-900/50 backdrop-blur-xl transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) relative flex flex-col",
-            !selectedNoteId
-              ? "flex-1 w-full border-l-0" // Full Screen Mode
-              : isGraphVisible
-                ? "w-[450px] shrink-0 border-l border-white/5 translate-x-0 opacity-100" // Sidebar Mode Visible
-                : "w-0 border-l-0 translate-x-20 opacity-0 overflow-hidden" // Sidebar Mode Hidden
-          )}
-        >
-          {/* Graph Toggle (Only visible when we are in Note Mode) */}
-          {selectedNoteId && (
-            <button
-              onClick={() => setIsGraphVisible(!isGraphVisible)}
-              className={cn(
-                "absolute top-4 -left-12 z-50 p-2 rounded-l-xl bg-card border-y border-l border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg",
-              )}
-              title={isGraphVisible ? "Hide Graph" : "Show Graph"}
-            >
-              {isGraphVisible ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
-            </button>
-          )}
-
-          <div className="flex-1 relative overflow-hidden">
-            <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} />
-          </div>
-
-          {/* Overlay Text for Empty State (Only in Full Screen Graph Mode) */}
-          {!selectedNoteId && (
-            <div className="pointer-events-none absolute bottom-12 left-12 max-w-md animate-fadeIn z-10">
-              <h1 className="text-4xl font-bold text-white/90 mb-4 font-serif tracking-tight">Thought Agent</h1>
-              <p className="text-lg text-white/60 leading-relaxed">
-                Select a node to explore your thoughts, or create a new note from the sidebar.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Floating Toggle if Graph is Hidden and Editor is full width (Only when note is active) */}
-        {selectedNoteId && !isGraphVisible && (
-          <button
-            onClick={() => setIsGraphVisible(true)}
-            className="absolute top-4 right-4 z-30 p-2 rounded-lg bg-secondary/80 backdrop-blur border border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg hover:shadow-primary/10"
-            title="Show Graph"
-          >
-            <Network size={20} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
+    );
 }

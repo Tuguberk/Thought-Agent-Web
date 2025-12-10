@@ -34,9 +34,11 @@ type GraphDataResponse = {
 export function GraphView({
   onNodeClick,
   selectedNodeId,
+  staticData,
 }: {
   onNodeClick: (id: string) => void;
   selectedNodeId?: string | null;
+  staticData?: GraphDataResponse;
 }) {
   const [data, setData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
     nodes: [],
@@ -74,6 +76,25 @@ export function GraphView({
 
   useEffect(() => {
     let isMounted = true;
+
+    if (staticData) {
+      // Use static data if provided
+      const linkCounts: Record<string, number> = {};
+      staticData.links.forEach((link) => {
+        linkCounts[link.source] = (linkCounts[link.source] || 0) + 1;
+        linkCounts[link.target] = (linkCounts[link.target] || 0) + 1;
+      });
+
+      const nodesWithVal = staticData.nodes.map((node: GraphNode) => ({
+        ...node,
+        val: (linkCounts[node.id] || 0) + 1,
+      }));
+
+      setData({ nodes: nodesWithVal, links: staticData.links });
+      setIsLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams({
       hideLonelyKeywords: String(hideLonelyKeywords),
     });
@@ -127,7 +148,7 @@ export function GraphView({
     return () => {
       isMounted = false;
     };
-  }, [hideLonelyKeywords]);
+  }, [hideLonelyKeywords, staticData]);
 
   useEffect(() => {
     if (!containerRef.current) return;
