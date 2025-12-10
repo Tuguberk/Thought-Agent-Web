@@ -86,7 +86,7 @@ export default function Home() {
           )}
 
           <div className="flex-1 relative overflow-hidden">
-            <GraphView onNodeClick={handleNavigate} />
+            <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} />
           </div>
 
           {/* Overlay Text for Empty State (Only in Full Screen Graph Mode) */}

@@ -17,6 +17,8 @@ type GraphNode = {
   val?: number;
   fx?: number;
   fy?: number;
+  x?: number;
+  y?: number;
 };
 
 type GraphLink = {
@@ -31,8 +33,10 @@ type GraphDataResponse = {
 
 export function GraphView({
   onNodeClick,
+  selectedNodeId,
 }: {
   onNodeClick: (id: string) => void;
+  selectedNodeId?: string | null;
 }) {
   const [data, setData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
     nodes: [],
@@ -155,11 +159,24 @@ export function GraphView({
 
   useEffect(() => {
     if (data.nodes.length > 0 && fgRef.current) {
-      setTimeout(() => {
-        fgRef.current.zoomToFit(1000, 150);
-      }, 200);
+      if (selectedNodeId) {
+        // If a node is selected, focus on it
+        const node = data.nodes.find((n) => n.id === selectedNodeId);
+        if (node) {
+          // We use a slight delay to ensure coordinates are ready if it's a fresh load
+          setTimeout(() => {
+            fgRef.current.centerAt(node.x, node.y, 1000);
+            fgRef.current.zoom(2.5, 1000);
+          }, 100);
+        }
+      } else {
+        // Initial load or reset
+        setTimeout(() => {
+          fgRef.current.zoomToFit(1000, 150);
+        }, 200);
+      }
     }
-  }, [data]);
+  }, [data, selectedNodeId]);
 
   return (
     <div
@@ -176,24 +193,41 @@ export function GraphView({
         }
         nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D) => {
           const label = node.name;
-          const fontSize = 2.5;
-          const r = Math.sqrt(node.val || 1) * 2;
+          const isSelected = selectedNodeId === node.id;
+          const fontSize = isSelected ? 4 : 2.5;
+          const r = Math.sqrt(node.val || 1) * (isSelected ? 3 : 2);
 
           const isKeyword = node.kind === "keyword";
 
           ctx.beginPath();
           ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
-          ctx.fillStyle = isKeyword ? "rgba(74, 222, 128, 0.9)" : "rgba(124, 58, 237, 0.9)"; // Tailwind color variables approx
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = isKeyword ? "rgba(74, 222, 128, 0.4)" : "rgba(124, 58, 237, 0.4)";
+
+          if (isSelected) {
+            ctx.fillStyle = isKeyword ? "#22c55e" : "#8b5cf6"; // Brighter colors for selection
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = isKeyword ? "rgba(34, 197, 94, 0.8)" : "rgba(139, 92, 246, 0.8)";
+          } else {
+            ctx.fillStyle = isKeyword ? "rgba(74, 222, 128, 0.9)" : "rgba(124, 58, 237, 0.9)";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = isKeyword ? "rgba(74, 222, 128, 0.4)" : "rgba(124, 58, 237, 0.4)";
+          }
+
           ctx.fill();
+
+          // Selection Ring
+          if (isSelected) {
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+
           ctx.shadowBlur = 0; // Reset shadow
 
           // Draw Label
-          ctx.font = `${fontSize}px Inter, sans-serif`;
+          ctx.font = `${isSelected ? "bold " : ""}${fontSize}px Inter, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+          ctx.fillStyle = isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.6)";
           ctx.fillText(label, node.x, node.y + r + 2);
         }}
         linkColor={() => "rgba(255,255,255,0.15)"}
