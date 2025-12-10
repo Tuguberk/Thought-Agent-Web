@@ -1,9 +1,12 @@
-"use client";
+
 
 import Link from "next/link";
 import { ArrowRight, Brain, Share2, Sparkles, Zap } from "lucide-react";
+import { auth, signIn } from "@/auth";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+    const session = await auth();
+
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30 selection:text-primary-foreground overflow-x-hidden">
 
@@ -17,19 +20,36 @@ export default function LandingPage() {
                         Thought Agent
                     </div>
                     <div className="flex items-center gap-6">
-                        <Link
-                            href="/app"
-                            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium transition-all hover:scale-105"
-                        >
-                            Sign In
-                        </Link>
-                        <Link
-                            href="/app"
-                            className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group"
-                        >
-                            Launch App
-                            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                        {!session ? (
+                            <form action={async () => {
+                                "use server"
+                                await signIn("google", { redirectTo: "/app" })
+                            }}>
+                                <button type="submit" className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium transition-all hover:scale-105">
+                                    Sign In
+                                </button>
+                            </form>
+                        ) : null}
+
+                        {session ? (
+                            <Link
+                                href="/app"
+                                className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group"
+                            >
+                                Launch App
+                                <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                            </Link>
+                        ) : (
+                            <form action={async () => {
+                                "use server"
+                                await signIn("google", { redirectTo: "/app" })
+                            }}>
+                                <button type="submit" className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group">
+                                    Get Started
+                                    <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                                </button>
+                            </form>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -59,13 +79,25 @@ export default function LandingPage() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                        <Link
-                            href="/app"
-                            className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2"
-                        >
-                            Get Started for Free
-                            <ArrowRight size={18} />
-                        </Link>
+                        {session ? (
+                            <Link
+                                href="/app"
+                                className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2"
+                            >
+                                Go to Dashboard
+                                <ArrowRight size={18} />
+                            </Link>
+                        ) : (
+                            <form action={async () => {
+                                "use server"
+                                await signIn("google", { redirectTo: "/app" })
+                            }}>
+                                <button type="submit" className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2">
+                                    Get Started for Free
+                                    <ArrowRight size={18} />
+                                </button>
+                            </form>
+                        )}
                         <Link
                             href="/demo"
                             className="h-12 px-8 rounded-xl bg-secondary/50 hover:bg-secondary border border-white/5 text-base font-medium backdrop-blur-sm transition-all text-muted-foreground hover:text-foreground flex items-center gap-2"

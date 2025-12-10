@@ -16,7 +16,7 @@ export function NoteList({
   selectedId,
   refreshKey,
 }: {
-  onSelect: (id: string | null) => void;
+  onSelect: (id: string | null, mode?: "edit" | "preview") => void;
   selectedId: string | null;
   refreshKey?: number;
 }) {
@@ -74,7 +74,7 @@ export function NoteList({
     });
     const newNote = await res.json();
     setNotes([newNote, ...notes]);
-    onSelect(newNote.id);
+    onSelect(newNote.id, "edit");
   };
 
   const deleteNote = async (e: React.MouseEvent, id: string) => {

@@ -32,11 +32,13 @@ export function NoteEditor({
   onNoteUpdate,
   onNavigate,
   onClose,
+  initialMode = "preview",
 }: {
   noteId: string;
   onNoteUpdate?: () => void;
   onNavigate?: (id: string) => void;
   onClose?: () => void;
+  initialMode?: "edit" | "preview";
 }) {
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState("");
@@ -74,8 +76,8 @@ export function NoteEditor({
   useEffect(() => {
     if (!noteId) return;
 
-    // Reset view mode to preview when switching notes
-    setViewMode("preview");
+    // Reset view mode based on initialMode when switching notes
+    setViewMode(initialMode);
 
     fetch(`/api/notes/${noteId}`)
       .then((res) => res.json())
@@ -105,7 +107,7 @@ export function NoteEditor({
             .finally(() => setIsGenerating(false));
         }
       });
-  }, [noteId]);
+  }, [noteId, initialMode]);
 
   const handleSave = async () => {
     if (!noteId) return;

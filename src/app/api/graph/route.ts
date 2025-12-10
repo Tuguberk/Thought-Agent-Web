@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 
 const parseBooleanParam = (value: string | null, fallback: boolean) => {
@@ -9,16 +10,26 @@ const parseBooleanParam = (value: string | null, fallback: boolean) => {
 };
 
 export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session || !session.user?.id) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const hideLonelyKeywords = parseBooleanParam(
     request.nextUrl.searchParams.get("hideLonelyKeywords"),
     true
   );
 
   const notes = await prisma.note.findMany({
+    where: { userId: session.user.id },
     select: { id: true, title: true, kind: true },
   });
 
   const links = await prisma.link.findMany({
+    where: {
+      source: { userId: session.user.id },
+      target: { userId: session.user.id }
+    },
     select: { sourceId: true, targetId: true },
   });
 

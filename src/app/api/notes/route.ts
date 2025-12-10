@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { processNote } from "@/lib/agent";
 
 export async function GET() {
+  const session = await auth();
+  if (!session || !session.user?.id) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const notes = await prisma.note.findMany({
+    where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -17,6 +24,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session || !session.user?.id) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const { content } = await request.json();
   // Simple title extraction (first line)
   const title =
@@ -30,6 +42,7 @@ export async function POST(request: Request) {
       content,
       title,
       kind: "entry",
+      userId: session.user.id,
     },
   });
 
