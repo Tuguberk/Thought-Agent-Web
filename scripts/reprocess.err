@@ -1,0 +1,19 @@
+Error processing note: PrismaClientKnownRequestError: 
+Invalid `prisma.link.upsert()` invocation in
+/Users/tugberkakbulut/Documents/Projects/thought/src/lib/agent.ts:420:27
+
+  417 
+  418 for (const link of result.links ?? []) {
+  419   if (!link?.targetId) continue;
+→ 420   await prisma.link.upsert(
+Foreign key constraint violated on the constraint: `Link_targetId_fkey`
+    at ei.handleRequestError (/Users/tugberkakbulut/Documents/Projects/thought/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)
+    at ei.handleAndLogRequestError (/Users/tugberkakbulut/Documents/Projects/thought/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/Users/tugberkakbulut/Documents/Projects/thought/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/Users/tugberkakbulut/Documents/Projects/thought/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async processNote (/Users/tugberkakbulut/Documents/Projects/thought/src/lib/agent.ts:420:9)
+    at async main (/Users/tugberkakbulut/Documents/Projects/thought/scripts/reprocess-notes.ts:15:5) {
+  code: 'P2003',
+  meta: { modelName: 'Link', constraint: 'Link_targetId_fkey' },
+  clientVersion: '6.19.0'
+}

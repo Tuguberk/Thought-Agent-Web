@@ -1,65 +1,116 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from "react";
+import { NoteList } from "@/components/NoteList";
+import { NoteEditor } from "@/components/NoteEditor";
+import { GraphView } from "@/components/GraphView";
+import { Network, PanelRightClose, PanelRightOpen, Layout } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isGraphVisible, setIsGraphVisible] = useState(true);
+
+  const handleNoteUpdate = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
+
+  const handleNavigate = useCallback((id: string) => {
+    setSelectedNoteId(id);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      {/* Sidebar - Note List */}
+      <div className="w-80 shrink-0 z-20 shadow-xl shadow-black/5">
+        <NoteList
+          selectedId={selectedNoteId}
+          refreshKey={refreshKey}
+          onSelect={setSelectedNoteId}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex min-w-0 relative">
+        {/* Editor Pane 
+            Hidden when no note is selected.
+            Visible (flex-1) when note is selected.
+        */}
+        <div className={cn(
+          "h-full transition-all duration-500 ease-in-out bg-background flex flex-col",
+          !selectedNoteId
+            ? "w-0 opacity-0 overflow-hidden"
+            : "flex-1 opacity-100"
+        )}>
+          {/* Only render Editor if selectedNoteId exists to prevent unnecessary mounting/fetching in hidden state 
+               However, keeping it mounted might be better for state preservation if needed, 
+               but for 'closing' effect, unmounting or hiding is fine. 
+               We use CSS hiding for transition effects.
+           */}
+          {selectedNoteId && (
+            <NoteEditor
+              noteId={selectedNoteId}
+              onNoteUpdate={handleNoteUpdate}
+              onNavigate={handleNavigate}
+              onClose={() => setSelectedNoteId(null)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          )}
         </div>
-      </main>
+
+        {/* Graph Pane 
+            Full width when no note is selected.
+            Sidebar width when note is selected.
+        */}
+        <div
+          className={cn(
+            "bg-gray-900/50 backdrop-blur-xl transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) relative flex flex-col",
+            !selectedNoteId
+              ? "flex-1 w-full border-l-0" // Full Screen Mode
+              : isGraphVisible
+                ? "w-[450px] shrink-0 border-l border-white/5 translate-x-0 opacity-100" // Sidebar Mode Visible
+                : "w-0 border-l-0 translate-x-20 opacity-0 overflow-hidden" // Sidebar Mode Hidden
+          )}
+        >
+          {/* Graph Toggle (Only visible when we are in Note Mode) */}
+          {selectedNoteId && (
+            <button
+              onClick={() => setIsGraphVisible(!isGraphVisible)}
+              className={cn(
+                "absolute top-4 -left-12 z-50 p-2 rounded-l-xl bg-card border-y border-l border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg",
+              )}
+              title={isGraphVisible ? "Hide Graph" : "Show Graph"}
+            >
+              {isGraphVisible ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+            </button>
+          )}
+
+          <div className="flex-1 relative overflow-hidden">
+            <GraphView onNodeClick={handleNavigate} />
+          </div>
+
+          {/* Overlay Text for Empty State (Only in Full Screen Graph Mode) */}
+          {!selectedNoteId && (
+            <div className="pointer-events-none absolute bottom-12 left-12 max-w-md animate-fadeIn z-10">
+              <h1 className="text-4xl font-bold text-white/90 mb-4 font-serif tracking-tight">Thought Agent</h1>
+              <p className="text-lg text-white/60 leading-relaxed">
+                Select a node to explore your thoughts, or create a new note from the sidebar.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Floating Toggle if Graph is Hidden and Editor is full width (Only when note is active) */}
+        {selectedNoteId && !isGraphVisible && (
+          <button
+            onClick={() => setIsGraphVisible(true)}
+            className="absolute top-4 right-4 z-30 p-2 rounded-lg bg-secondary/80 backdrop-blur border border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg hover:shadow-primary/10"
+            title="Show Graph"
+          >
+            <Network size={20} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

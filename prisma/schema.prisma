@@ -1,0 +1,43 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Note {
+  id        String                 @id @default(cuid())
+  title     String?
+  content   String
+  summary   String?
+  embedding Unsupported("vector")?
+  kind      NoteKind               @default(entry)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  linksFrom Link[] @relation("SourceLinks")
+  linksTo   Link[] @relation("TargetLinks")
+}
+
+enum NoteKind {
+  entry
+  keyword
+}
+
+model Link {
+  id            String   @id @default(cuid())
+  sourceId      String
+  targetId      String
+  type          String?  @default("ai") // "ai" or "manual"
+  matchedPhrase String?
+  createdAt     DateTime @default(now())
+
+  source Note @relation("SourceLinks", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Note @relation("TargetLinks", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+}
