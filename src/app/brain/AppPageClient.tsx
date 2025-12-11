@@ -100,30 +100,10 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
             {/* Graph Panel (Sidebar Mode) */}
             {isGraphVisible && (
               <ResizablePanel id="graph-panel" defaultSize={40} minSize={28} order={2} className="bg-gray-900/50 backdrop-blur-xl relative border-l border-white/5">
-                {/* Graph Toggle Inside Panel */}
-                <button
-                  onClick={() => setIsGraphVisible(false)}
-                  className="absolute top-[1.5rem] left-[1rem] z-50 p-2 rounded-lg bg-card/80 border border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg backdrop-blur-md"
-                  title="Hide Graph"
-                >
-                  <PanelRightClose size={18} />
-                </button>
                 <div className="w-full h-full relative overflow-hidden">
                   <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} />
                 </div>
               </ResizablePanel>
-            )}
-
-            {!isGraphVisible && (
-              <div className="absolute top-4 right-4 z-50">
-                <button
-                  onClick={() => setIsGraphVisible(true)}
-                  className="p-2 rounded-lg bg-secondary/80 backdrop-blur border border-white/10 text-muted-foreground hover:text-primary transition-all shadow-lg hover:shadow-primary/10"
-                  title="Show Graph"
-                >
-                  <Network size={20} />
-                </button>
-              </div>
             )}
           </ResizablePanelGroup>
         )}
