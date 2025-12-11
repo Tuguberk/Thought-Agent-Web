@@ -266,7 +266,7 @@ export function GraphView({
       // onEngineStop={() => fgRef.current?.zoomToFit(500, 200)} // this causes error when resizing the grapgh
       />}
 
-      <div className="absolute top-4 right-4 z-10 w-64 flex flex-col gap-2 pointer-events-none">
+      <div className="absolute top-4 right-4 z-10 w-56 flex flex-col gap-2 pointer-events-none">
         <div className="pointer-events-auto rounded-xl bg-card/80 shadow-xl border border-white/5 backdrop-blur-md overflow-hidden transition-all duration-300">
           <div
             className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
@@ -290,7 +290,7 @@ export function GraphView({
           )}>
             <button
               onClick={() => fgRef.current?.zoomToFit(400)}
-              className="mb-4 w-full rounded-lg bg-secondary/50 hover:bg-secondary border border-white/5 px-3 py-2 text-xs font-medium text-secondary-foreground transition-all flex items-center justify-center gap-2 group"
+              className="mb-4 mt-2 w-full rounded-lg bg-secondary/50 hover:bg-secondary border border-white/5 px-3 py-2 text-xs font-medium text-secondary-foreground transition-all flex items-center justify-center gap-2 group"
             >
               <Maximize size={12} className="group-hover:scale-110 transition-transform" />
               Fit to Screen

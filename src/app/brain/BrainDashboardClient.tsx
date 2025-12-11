@@ -106,7 +106,7 @@ export default function BrainDashboardClient({
                                 disabled={isCreating || !newBrainName.trim()}
                                 className="w-full py-2 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                             >
-                                {isCreating ? <Loader2 size={16} className="animate-spin" /> : "Create Workspace"}
+                                {isCreating ? <Loader2 size={16} className="animate-spin" /> : "Create New Brain"}
                             </button>
                         </form>
                     </div>
