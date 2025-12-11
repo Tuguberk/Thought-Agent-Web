@@ -258,7 +258,7 @@ export function GraphView({
         backgroundColor="#09090b" // bg-zinc-950 approx
         onNodeClick={(node: any) => onNodeClick(node.id)}
         cooldownTicks={100}
-        onEngineStop={() => fgRef.current?.zoomToFit(500, 200)}
+      // onEngineStop={() => fgRef.current?.zoomToFit(500, 200)} // this causes error when resizing the grapgh
       />}
 
       <div className="absolute top-4 right-4 z-10 w-64 flex flex-col gap-2 pointer-events-none">

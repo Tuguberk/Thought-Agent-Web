@@ -8,7 +8,7 @@ export default async function LandingPage() {
     const session = await auth();
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30 selection:text-primary-foreground overflow-x-hidden">
+        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30 selection:text-primary-foreground">
 
             {/* Navbar */}
             <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-background/50 backdrop-blur-xl">
@@ -23,7 +23,7 @@ export default async function LandingPage() {
                         {!session ? (
                             <form action={async () => {
                                 "use server"
-                                await signIn("google", { redirectTo: "/app" })
+                                await signIn("google", { redirectTo: "/brain" })
                             }}>
                                 <button type="submit" className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium transition-all hover:scale-105">
                                     Sign In
@@ -33,7 +33,7 @@ export default async function LandingPage() {
 
                         {session ? (
                             <Link
-                                href="/app"
+                                href="/brain"
                                 className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group"
                             >
                                 Launch App
@@ -42,7 +42,7 @@ export default async function LandingPage() {
                         ) : (
                             <form action={async () => {
                                 "use server"
-                                await signIn("google", { redirectTo: "/app" })
+                                await signIn("google", { redirectTo: "/brain" })
                             }}>
                                 <button type="submit" className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 group">
                                     Get Started
@@ -81,7 +81,7 @@ export default async function LandingPage() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                         {session ? (
                             <Link
-                                href="/app"
+                                href="/brain"
                                 className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2"
                             >
                                 Go to Dashboard
@@ -90,7 +90,7 @@ export default async function LandingPage() {
                         ) : (
                             <form action={async () => {
                                 "use server"
-                                await signIn("google", { redirectTo: "/app" })
+                                await signIn("google", { redirectTo: "/brain" })
                             }}>
                                 <button type="submit" className="h-12 px-8 rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2">
                                     Get Started for Free

@@ -66,7 +66,17 @@ export async function PUT(
     data: { content, title: finalTitle },
   });
 
-  await processNote(id, existing.content);
+  const { auth } = await import("@/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    // If no user, we can't process the note with user ID. 
+    // For now, let's just skip processing or throw error. 
+    // Given this is a PUT on an existing note, the user should be authenticated.
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  await processNote(id, session.user.id, existing.content);
 
   return NextResponse.json(note);
 }

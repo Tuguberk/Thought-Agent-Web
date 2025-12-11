@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Plus, Search, Trash2, FileText, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConfirmationModal } from "./ui/ConfirmationModal";
 
 interface Note {
   id: string;
@@ -24,6 +25,7 @@ export function NoteList({
   const [searchResults, setSearchResults] = useState<Note[]>([]);
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -77,19 +79,24 @@ export function NoteList({
     onSelect(newNote.id, "edit");
   };
 
-  const deleteNote = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this note?")) return;
+  const confirmDelete = async () => {
+    if (!noteToDelete) return;
 
-    await fetch(`/api/notes/${id}`, {
+    await fetch(`/api/notes/${noteToDelete}`, {
       method: "DELETE",
     });
 
-    setNotes(notes.filter((n) => n.id !== id));
-    setSearchResults((prev) => prev.filter((n) => n.id !== id));
-    if (selectedId === id) {
+    setNotes(notes.filter((n) => n.id !== noteToDelete));
+    setSearchResults((prev) => prev.filter((n) => n.id !== noteToDelete));
+    if (selectedId === noteToDelete) {
       onSelect(null);
     }
+    setNoteToDelete(null);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setNoteToDelete(id);
   };
 
   const visibleNotes = query.trim() ? searchResults : notes;
@@ -110,7 +117,7 @@ export function NoteList({
     >
       <div className="flex-1 min-w-0 pr-3">
         <div className={cn("font-medium truncate flex items-center gap-2", selectedId === note.id ? "text-primary-foreground" : "text-foreground")}>
-          {note.kind === 'keyword' ? <Hash size={14} className="text-muted-foreground/70" /> : <FileText size={14} className="text-muted-foreground/70" />}
+          {note.kind === 'keyword' ? <Hash size={14} className="text-muted-foreground/70" /> : <FileText size={20} className="text-muted-foreground/70" />}
           <span className="truncate text-sm">{note.title || "Untitled Note"}</span>
         </div>
         <div className="text-[10px] text-muted-foreground mt-0.5 ml-6">
@@ -119,7 +126,7 @@ export function NoteList({
       </div>
 
       <button
-        onClick={(e) => deleteNote(e, note.id)}
+        onClick={(e) => handleDeleteClick(e, note.id)}
         className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-all duration-200"
         title="Delete note"
       >
@@ -178,7 +185,7 @@ export function NoteList({
           <>
             {entries.length > 0 && (
               <div className="space-y-1">
-                <div className="px-3 pb-2 text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">
+                <div className="px-3 pb-2 text-[10px] font-bold text-primary-foreground  uppercase tracking-widest">
                   Notes
                 </div>
                 <div className="space-y-1">
@@ -189,7 +196,7 @@ export function NoteList({
 
             {keywords.length > 0 && (
               <div className="space-y-1">
-                <div className="px-3 pb-2 text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-4">
+                <div className="px-3 pb-2 text-[10px] font-bold text-primary-foreground uppercase tracking-widest mt-4">
                   Keywords
                 </div>
                 <div className="space-y-1">
@@ -200,6 +207,13 @@ export function NoteList({
           </>
         )}
       </div>
-    </div>
+      <ConfirmationModal
+        isOpen={!!noteToDelete}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Note"
+        description="Are you sure you want to delete this note? This action cannot be undone and the note will be permanently removed from your library."
+      />
+    </div >
   );
 }

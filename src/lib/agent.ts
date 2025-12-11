@@ -92,7 +92,8 @@ const extractBracketRefs = (content: string) => {
 const ensureLinkedNote = async (
   title: string,
   preferredKind: NoteCategory,
-  cache: Map<string, MinimalNote>
+  cache: Map<string, MinimalNote>,
+  userId: string
 ): Promise<MinimalNote | null> => {
   const normalized = title.toLowerCase();
   if (cache.has(normalized)) {
@@ -116,6 +117,7 @@ const ensureLinkedNote = async (
         ? `Auto-generated keyword placeholder for [[${title}]].`
         : "",
     kind: preferredKind,
+    userId: userId,
   };
 
   const created = (await prisma.note.create({ data: payload })) as MinimalNote;
@@ -223,7 +225,7 @@ export const rebuildKeywordNoteContent = async (
   return true;
 };
 
-export async function processNote(noteId: string, previousContent?: string) {
+export async function processNote(noteId: string, userId: string, previousContent?: string) {
   const note = await prisma.note.findUnique({ where: { id: noteId } });
   if (!note) return;
 
@@ -335,7 +337,7 @@ export async function processNote(noteId: string, previousContent?: string) {
       const cache = new Map<string, MinimalNote>();
       for (const ref of bracketRefs) {
         const normalizedRef = ref.toLowerCase();
-        const target = await ensureLinkedNote(ref, "keyword", cache);
+        const target = await ensureLinkedNote(ref, "keyword", cache, userId);
         if (!target || target.id === noteId) continue;
 
         const linkType = target.kind === "keyword" ? "keyword" : "bracket";
@@ -444,12 +446,12 @@ export async function processNote(noteId: string, previousContent?: string) {
 
         const existingLinks = siblingIds.length
           ? await prisma.link.findMany({
-              where: {
-                sourceId: noteId,
-                targetId: { in: siblingIds },
-              },
-              select: { targetId: true },
-            })
+            where: {
+              sourceId: noteId,
+              targetId: { in: siblingIds },
+            },
+            select: { targetId: true },
+          })
           : [];
         const alreadyLinked = new Set(
           existingLinks.map((link) => link.targetId)
@@ -495,14 +497,14 @@ export async function processNote(noteId: string, previousContent?: string) {
 
     const entityCandidates = normalizedEntities.length
       ? await prisma.note.findMany({
-          where: {
-            id: { not: noteId },
-            OR: normalizedEntities.map((term) => ({
-              title: { equals: term, mode: "insensitive" },
-            })),
-          },
-          select: { id: true, title: true, content: true },
-        })
+        where: {
+          id: { not: noteId },
+          OR: normalizedEntities.map((term) => ({
+            title: { equals: term, mode: "insensitive" },
+          })),
+        },
+        select: { id: true, title: true, content: true },
+      })
       : [];
 
     let reverseCandidates: Array<{
@@ -540,16 +542,14 @@ export async function processNote(noteId: string, previousContent?: string) {
     const allowedTargetIds = new Set(uniqueCandidates.map((item) => item.id));
 
     if (uniqueCandidates.length > 0) {
-      const prompt = `You are building a densely connected knowledge graph.\nAlways prefer returning a link when in doubt.\nReturn JSON: { "links": [ { "targetId": "...", "type": "semantic" | "phrase_match", "reason": "...", "matchedPhrase": "..." } ] }\nProvide up to 8 links. matchedPhrase must quote the exact substring from the new note when available.\n\nNew Note:\nTitle: ${
-        note.title || "Untitled"
-      }\nContent: ${workingContent}\n\nCandidates:\n${uniqueCandidates
-        .map(
-          (n) =>
-            `- ID: ${n.id}\n  Title: ${
-              n.title || "Untitled"
-            }\n  Content: ${n.content.substring(0, 200)}...`
-        )
-        .join("\n")}`;
+      const prompt = `You are building a densely connected knowledge graph.\nAlways prefer returning a link when in doubt.\nReturn JSON: { "links": [ { "targetId": "...", "type": "semantic" | "phrase_match", "reason": "...", "matchedPhrase": "..." } ] }\nProvide up to 8 links. matchedPhrase must quote the exact substring from the new note when available.\n\nNew Note:\nTitle: ${note.title || "Untitled"
+        }\nContent: ${workingContent}\n\nCandidates:\n${uniqueCandidates
+          .map(
+            (n) =>
+              `- ID: ${n.id}\n  Title: ${n.title || "Untitled"
+              }\n  Content: ${n.content.substring(0, 200)}...`
+          )
+          .join("\n")}`;
 
       llmTracker.count += 1;
       const { text: jsonResponse } = await generateText({
