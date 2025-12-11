@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import { Save, Loader2, ArrowRight, ArrowLeft, Hash, ExternalLink, Eye, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConfirmationModal } from "./ui/ConfirmationModal";
 
 interface Note {
   id: string;
@@ -47,6 +48,7 @@ export function NoteEditor({
   const [isGenerating, setIsGenerating] = useState(false);
   const [noteDirectory, setNoteDirectory] = useState<NoteDirectoryEntry[]>([]);
   const [viewMode, setViewMode] = useState<"edit" | "preview">("preview");
+  const [linkToDelete, setLinkToDelete] = useState<{ sourceId: string; targetId: string } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -414,35 +416,18 @@ export function NoteEditor({
                           <span>{link.target.title}</span>
                         </button>
                         <button
-                          onClick={async (e) => {
+                          onClick={(e) => {
                             e.stopPropagation();
-                            if (!confirm("Are you sure you want to remove this link?")) return;
-                            try {
-                              await fetch("/api/links", {
-                                method: "DELETE",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  sourceId: note.id,
-                                  targetId: link.target.id,
-                                }),
-                              });
-                              // update local state
-                              setNote((prev) =>
-                                prev
-                                  ? {
-                                    ...prev,
-                                    linksFrom: prev.linksFrom.filter((l) => l.target.id !== link.target.id),
-                                  }
-                                  : null
-                              );
-                            } catch (error) {
-                              console.error("Failed to delete link", error);
-                            }
+                            if (!note) return;
+                            setLinkToDelete({
+                              sourceId: note.id,
+                              targetId: link.target.id,
+                            });
                           }}
-                          className="px-2 py-1.5 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          className="px-2 py-1.5 text-muted-foreground transition-colors opacity-0 group-hover:opacity-100"
                           title="Remove connection"
                         >
-                          <X size={12} />
+                          <X className="hover:text-red-500" size={12} />
                         </button>
                       </div>
                     ))}
@@ -461,32 +446,15 @@ export function NoteEditor({
                           <span>{link.source.title}</span>
                         </button>
                         <button
-                          onClick={async (e) => {
+                          onClick={(e) => {
                             e.stopPropagation();
-                            if (!confirm("Are you sure you want to remove this link?")) return;
-                            try {
-                              await fetch("/api/links", {
-                                method: "DELETE",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  sourceId: link.source.id,
-                                  targetId: note.id,
-                                }),
-                              });
-                              // update local state
-                              setNote((prev) =>
-                                prev
-                                  ? {
-                                    ...prev,
-                                    linksTo: prev.linksTo.filter((l) => l.source.id !== link.source.id),
-                                  }
-                                  : null
-                              );
-                            } catch (error) {
-                              console.error("Failed to delete link", error);
-                            }
+                            if (!note) return;
+                            setLinkToDelete({
+                              sourceId: link.source.id,
+                              targetId: note.id,
+                            });
                           }}
-                          className="px-2 py-1.5 text-muted-foreground hover:text-red-500 transition-colors group-hover:text-red-500"
+                          className="px-2 py-1.5 text-muted-foreground transition-colors opacity-0 group-hover:opacity-100"
                           title="Remove connection"
                         >
                           <X className="hover:text-red-500" size={12} />
@@ -500,6 +468,33 @@ export function NoteEditor({
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={!!linkToDelete}
+        onClose={() => setLinkToDelete(null)}
+        onConfirm={async () => {
+          if (!linkToDelete) return;
+          try {
+            await fetch("/api/links", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(linkToDelete),
+            });
+            // update local state
+            setNote((prev) => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                linksFrom: prev.linksFrom.filter((l) => l.target.id !== linkToDelete.targetId || prev.id !== linkToDelete.sourceId),
+                linksTo: prev.linksTo.filter((l) => l.source.id !== linkToDelete.sourceId || prev.id !== linkToDelete.targetId),
+              };
+            });
+          } catch (error) {
+            console.error("Failed to delete link", error);
+          }
+        }}
+        title="Remove Connection"
+        description="Are you sure you want to remove this link? This action cannot be undone."
+      />
     </div>
   );
 }
