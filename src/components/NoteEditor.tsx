@@ -398,30 +398,100 @@ export function NoteEditor({
                   <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Connections</h3>
                   <div className="flex flex-wrap gap-2">
                     {note.linksFrom.map((link) => (
-                      <button
+                      <div
                         key={link.target.id}
-                        onClick={() => onNavigate?.(link.target.id)}
-                        className="group px-3 py-1.5 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg text-xs transition-all flex items-center gap-2 border border-white/5"
+                        className="group flex items-center gap-0 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg border border-white/5 transition-all"
                       >
-                        <span className="opacity-50">
-                          {link.type === "keyword"
-                            ? <Hash size={12} />
-                            : <ArrowRight size={12} />}
-                        </span>
-                        <span>{link.target.title}</span>
-                      </button>
+                        <button
+                          onClick={() => onNavigate?.(link.target.id)}
+                          className="py-1.5 text-xs flex items-center"
+                        >
+                          <span className="opacity-50 px-2">
+                            {link.type === "keyword"
+                              ? <Hash size={12} />
+                              : <ArrowRight size={12} />}
+                          </span>
+                          <span>{link.target.title}</span>
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm("Are you sure you want to remove this link?")) return;
+                            try {
+                              await fetch("/api/links", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  sourceId: note.id,
+                                  targetId: link.target.id,
+                                }),
+                              });
+                              // update local state
+                              setNote((prev) =>
+                                prev
+                                  ? {
+                                    ...prev,
+                                    linksFrom: prev.linksFrom.filter((l) => l.target.id !== link.target.id),
+                                  }
+                                  : null
+                              );
+                            } catch (error) {
+                              console.error("Failed to delete link", error);
+                            }
+                          }}
+                          className="px-2 py-1.5 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Remove connection"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
                     ))}
                     {note.linksTo.map((link) => (
-                      <button
+                      <div
                         key={link.source.id}
-                        onClick={() => onNavigate?.(link.source.id)}
-                        className="group px-3 py-1.5 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg text-xs transition-all flex items-center gap-2 border border-white/5"
+                        className="group flex items-center gap-0 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg border border-white/5 transition-all"
                       >
-                        <span className="opacity-50">
-                          <ArrowLeft size={12} />
-                        </span>
-                        <span>{link.source.title}</span>
-                      </button>
+                        <button
+                          onClick={() => onNavigate?.(link.source.id)}
+                          className="py-1.5 text-xs flex items-center"
+                        >
+                          <span className="opacity-50 px-2">
+                            <ArrowLeft size={12} />
+                          </span>
+                          <span>{link.source.title}</span>
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm("Are you sure you want to remove this link?")) return;
+                            try {
+                              await fetch("/api/links", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  sourceId: link.source.id,
+                                  targetId: note.id,
+                                }),
+                              });
+                              // update local state
+                              setNote((prev) =>
+                                prev
+                                  ? {
+                                    ...prev,
+                                    linksTo: prev.linksTo.filter((l) => l.source.id !== link.source.id),
+                                  }
+                                  : null
+                              );
+                            } catch (error) {
+                              console.error("Failed to delete link", error);
+                            }
+                          }}
+                          className="px-2 py-1.5 text-muted-foreground hover:text-red-500 transition-colors group-hover:text-red-500"
+                          title="Remove connection"
+                        >
+                          <X className="hover:text-red-500" size={12} />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>

@@ -1,37 +1,107 @@
 @import "tailwindcss";
 
-:root {
-  /* HSL Color Variables for easy theming */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+@layer base {
 
-  --card: 240 10% 5%;
-  --card-foreground: 0 0% 98%;
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  :root {
+    /* HSL Color Variables for easy theming */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-  --primary: 263.4 70% 50.4%;
-  /* Deep Purple/Indigo */
-  --primary-foreground: 210 40% 98%;
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
 
-  --secondary: 240 4% 16%;
-  --secondary-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-  --muted: 240 4% 16%;
-  --muted-foreground: 240 5% 64.9%;
+    --primary: 263.4 70% 50.4%;
+    /* Deep Purple/Indigo */
+    --primary-foreground: 210 40% 98%;
 
-  --accent: 240 4% 16%;
-  --accent-foreground: 0 0% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 64.9%;
 
-  --border: 240 4% 16%;
-  --input: 240 4% 16%;
-  --ring: 263.4 70% 50.4%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
 
-  --radius: 0.75rem;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 263.4 70% 50.4%;
+
+    --radius: 0.75rem;
+  }
+
+
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Glassmorphism Utilities */
+  .glass {
+    background: rgba(20, 20, 25, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .bg-dot-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Custom Scrollbar for Webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Animation utilities that might not be in default tailwind config if using v4 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
 }
 
 @theme inline {
@@ -62,62 +132,4 @@
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-merriweather);
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Glassmorphism Utilities */
-.glass {
-  background: rgba(20, 20, 25, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.bg-dot-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-/* Custom Scrollbar for Webkit */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
-
-/* Animation utilities that might not be in default tailwind config if using v4 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
 }
