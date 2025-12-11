@@ -83,6 +83,7 @@ export default function DemoPage() {
                 <GraphView
                     onNodeClick={(id) => console.log("Clicked node:", id)}
                     staticData={typedDemoData}
+                    brainId={undefined}
                 />
             </div>
         </div>

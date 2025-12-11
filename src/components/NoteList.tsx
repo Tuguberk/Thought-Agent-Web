@@ -16,10 +16,12 @@ export function NoteList({
   onSelect,
   selectedId,
   refreshKey,
+  brainId,
 }: {
   onSelect: (id: string | null, mode?: "edit" | "preview") => void;
   selectedId: string | null;
   refreshKey?: number;
+  brainId: string;
 }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchResults, setSearchResults] = useState<Note[]>([]);
@@ -29,7 +31,7 @@ export function NoteList({
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/notes")
+    fetch(`/api/notes?brainId=${brainId}`)
       .then((res) => res.json())
       .then((data) => {
         if (isMounted) setNotes(data);
@@ -37,7 +39,7 @@ export function NoteList({
     return () => {
       isMounted = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, brainId]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -50,7 +52,7 @@ export function NoteList({
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setIsSearching(true);
-      fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
+      fetch(`/api/search?q=${encodeURIComponent(trimmed)}&brainId=${brainId}`, {
         signal: controller.signal,
       })
         .then((res) => res.json())
@@ -67,12 +69,12 @@ export function NoteList({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, brainId]);
 
   const createNote = async () => {
     const res = await fetch("/api/notes", {
       method: "POST",
-      body: JSON.stringify({ content: "" }),
+      body: JSON.stringify({ content: "", brainId }),
     });
     const newNote = await res.json();
     setNotes([newNote, ...notes]);
@@ -120,10 +122,11 @@ export function NoteList({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (file.name.endsWith(".md")) {
+      // Support .md and .txt extensions
+      if (file.name.match(/\.(md|txt)$/i)) {
         const text = await file.text();
-        // Simple title extraction: filename without extension
-        const title = file.name.replace(/\.md$/, "");
+        // Remove extension from title
+        const title = file.name.replace(/\.(md|txt)$/i, "");
         notesToImport.push({ title, content: text });
       }
     }
@@ -133,7 +136,7 @@ export function NoteList({
         const res = await fetch("/api/notes/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ notes: notesToImport })
+          body: JSON.stringify({ notes: notesToImport, brainId })
         });
         const data = await res.json();
         if (data.success) {
@@ -144,10 +147,10 @@ export function NoteList({
           // We should probably tell parent we updated, but NoteList doesn't have onUpdate prop for list changes?
           // Wait, createNote calls onSelect(newNote.id).
           // We should probably just refetch local notes manually or simple window reload for now?
-          // Or better: Re-fetch notes here locally?
+          //          // Re-fetch notes here locally?
           // The useEffect depends on 'refreshKey'.
           // We can cheat and run the fetch logic again.
-          const notesRes = await fetch("/api/notes");
+          const notesRes = await fetch(`/api/notes?brainId=${brainId}`);
           const notesData = await notesRes.json();
           setNotes(notesData);
         }

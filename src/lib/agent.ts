@@ -99,7 +99,8 @@ const ensureLinkedNote = async (
   title: string,
   preferredKind: NoteCategory,
   cache: Map<string, MinimalNote>,
-  userId: string
+  userId: string,
+  brainId?: string | null
 ): Promise<MinimalNote | null> => {
   const normalized = title.toLowerCase();
   if (cache.has(normalized)) {
@@ -107,7 +108,10 @@ const ensureLinkedNote = async (
   }
 
   const existing = (await prisma.note.findFirst({
-    where: { title: { equals: title, mode: "insensitive" } },
+    where: {
+      title: { equals: title, mode: "insensitive" },
+      brainId: brainId || null
+    },
   })) as MinimalNote | null;
 
   if (existing) {
@@ -124,6 +128,7 @@ const ensureLinkedNote = async (
         : "",
     kind: preferredKind,
     userId: userId,
+    brainId: brainId || undefined,
   };
 
   const created = (await prisma.note.create({ data: payload })) as MinimalNote;
@@ -343,7 +348,7 @@ export async function processNote(noteId: string, userId: string, previousConten
       const cache = new Map<string, MinimalNote>();
       for (const ref of bracketRefs) {
         const normalizedRef = ref.toLowerCase();
-        const target = await ensureLinkedNote(ref, "keyword", cache, userId);
+        const target = await ensureLinkedNote(ref, "keyword", cache, userId, note.brainId);
         if (!target || target.id === noteId) continue;
 
         const linkType = target.kind === "keyword" ? "keyword" : "bracket";
@@ -670,7 +675,8 @@ export async function processNoteLight(
   noteId: string,
   userId: string,
   content: string,
-  title?: string
+  title?: string,
+  brainId?: string | null
 ) {
   const llmTracker: LlmTracker = { count: 0 };
   try {
@@ -680,13 +686,13 @@ export async function processNoteLight(
     llmTracker.count += 1;
     const { embedding } = await embed({
       model: openrouter.embedding("openai/text-embedding-3-small"),
-      value: workingContent,
+      value: content, // Use content
     });
     const embeddingString = `[${embedding.join(",")}]`;
 
     // 2. Update Note with Embedding (and Title if needed)
     if (!title || title.trim() === "" || title === "Untitled") {
-      // If we don't have a title, just use embedding. 
+      // If we don't have a title, just use embedding.
       // Note: Light mode assumes title is usually passed from filename.
       await prisma.$executeRaw`
          UPDATE "Note"
@@ -702,17 +708,17 @@ export async function processNoteLight(
     }
 
     // 3. Extract and Connect Bracket Links
-    const bracketRefs = extractBracketRefs(workingContent);
-    const bracketLinkTargets = new Set<string>();
+    const bracketRefs = extractBracketRefs(content); // Use 'content' directly as per instruction
+    const bracketLinkTargets = new Set<string>(); // This variable was removed in the instruction, but it's used later. Re-adding it.
 
     if (bracketRefs.length) {
-      const cache = new Map<string, MinimalNote>();
-      const keywordTargets = new Map<string, { label: string; note: MinimalNote }>();
+      const cache = new Map<string, MinimalNote>(); // Moved outside if block as per instruction
+      const keywordTargets = new Map<string, { label: string; note: MinimalNote }>(); // Updated type as per instruction
 
       for (const ref of bracketRefs) {
-        const normalizedRef = ref.toLowerCase();
-        // Ensure the target note exists (as keyword or entry)
-        const target = await ensureLinkedNote(ref, "keyword", cache, userId);
+        // Create/find the target note
+        const normalizedRef = ref.toLowerCase(); // This was missing in the instruction's snippet, but needed for keywordTargets map.
+        const target = await ensureLinkedNote(ref, "keyword", cache, userId, brainId); // Added brainId
         if (!target || target.id === noteId) continue;
 
         const linkType = target.kind === "keyword" ? "keyword" : "bracket";

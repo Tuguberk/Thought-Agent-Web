@@ -20,15 +20,26 @@ export async function GET(request: NextRequest) {
     true
   );
 
+  const brainId = request.nextUrl.searchParams.get("brainId");
+
   const notes = await prisma.note.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      brainId: brainId || undefined
+    },
     select: { id: true, title: true, kind: true },
   });
 
   const links = await prisma.link.findMany({
     where: {
-      source: { userId: session.user.id },
-      target: { userId: session.user.id }
+      source: {
+        userId: session.user.id,
+        brainId: brainId || undefined
+      },
+      target: {
+        userId: session.user.id,
+        brainId: brainId || undefined
+      }
     },
     select: { sourceId: true, targetId: true },
   });

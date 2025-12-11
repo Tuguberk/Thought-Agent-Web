@@ -34,12 +34,14 @@ export function NoteEditor({
   onNavigate,
   onClose,
   initialMode = "preview",
+  brainId,
 }: {
   noteId: string;
   onNoteUpdate?: () => void;
   onNavigate?: (id: string) => void;
   onClose?: () => void;
   initialMode?: "edit" | "preview";
+  brainId: string;
 }) {
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState("");
@@ -52,7 +54,7 @@ export function NoteEditor({
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/notes")
+    fetch(`/api/notes?brainId=${brainId}`)
       .then((res) => res.json())
       .then((data: NoteDirectoryEntry[]) => {
         if (isMounted) setNoteDirectory(data);
@@ -62,7 +64,7 @@ export function NoteEditor({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [brainId]);
 
   const globalTitleMap = useMemo(() => {
     const map = new Map<string, string>();

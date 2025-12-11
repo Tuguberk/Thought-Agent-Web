@@ -18,6 +18,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   notes         Note[]
+  brains        Brain[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,8 +76,22 @@ model Note {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  brainId   String?
+  brain     Brain?   @relation(fields: [brainId], references: [id], onDelete: Cascade)
+
   linksFrom Link[] @relation("SourceLinks")
   linksTo   Link[] @relation("TargetLinks")
+}
+
+model Brain {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum NoteKind {

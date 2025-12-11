@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { LogOut, User } from "lucide-react";
 
-export default function AppClient({ session }: { session: any }) {
+export default function AppClient({ session, brainId }: { session: any, brainId: string }) {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -57,6 +57,7 @@ export default function AppClient({ session }: { session: any }) {
             selectedId={selectedNoteId}
             refreshKey={refreshKey}
             onSelect={handleNavigate}
+            brainId={brainId}
           />
         </div>
       </div>
@@ -85,6 +86,7 @@ export default function AppClient({ session }: { session: any }) {
               onNavigate={handleNavigate}
               onClose={() => setSelectedNoteId(null)}
               initialMode={editorMode}
+              brainId={brainId}
             />
           )}
         </div>
@@ -117,7 +119,7 @@ export default function AppClient({ session }: { session: any }) {
           )}
 
           <div className="flex-1 relative overflow-hidden">
-            <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} />
+            <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} />
           </div>
 
           {/* Overlay Text for Empty State (Only in Full Screen Graph Mode) */}

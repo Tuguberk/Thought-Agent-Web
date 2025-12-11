@@ -35,10 +35,12 @@ export function GraphView({
   onNodeClick,
   selectedNodeId,
   staticData,
+  brainId,
 }: {
   onNodeClick: (id: string) => void;
   selectedNodeId?: string | null;
   staticData?: GraphDataResponse;
+  brainId?: string;
 }) {
   const [data, setData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
     nodes: [],
@@ -98,6 +100,9 @@ export function GraphView({
     const params = new URLSearchParams({
       hideLonelyKeywords: String(hideLonelyKeywords),
     });
+    if (brainId) {
+      params.append("brainId", brainId);
+    }
 
     fetch(`/api/graph?${params.toString()}`)
       .then((res) => {
@@ -148,7 +153,7 @@ export function GraphView({
     return () => {
       isMounted = false;
     };
-  }, [hideLonelyKeywords, staticData]);
+  }, [hideLonelyKeywords, staticData, brainId]);
 
   useEffect(() => {
     if (!containerRef.current) return;

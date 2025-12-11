@@ -5,14 +5,14 @@ import { processNote } from "../src/lib/agent";
 async function main() {
   const notes = await prisma.note.findMany({
     where: { kind: "entry" },
-    select: { id: true, title: true },
+    select: { id: true, title: true, userId: true },
   });
 
   console.log(`Reprocessing ${notes.length} notes...`);
 
   for (const note of notes) {
     console.log(`→ Processing ${note.title || note.id}`);
-    await processNote(note.id);
+    await processNote(note.id, note.userId);
   }
 
   console.log("Done.");

@@ -3,14 +3,22 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { processNote } from "@/lib/agent";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session || !session.user?.id) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const brainId = searchParams.get("brainId");
+
   const notes = await prisma.note.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      brainId: brainId || undefined // if null/empty, fetch without filtering (for now) or fetch global? Plan says specific brain. 
+      // If brainId is not provided, we might want to return "no notes" or "notes without brain".
+      // Let's assume for now filters by brainId if provided, else maybe all? 
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -29,7 +37,7 @@ export async function POST(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const { content } = await request.json();
+  const { content, brainId } = await request.json();
   // Simple title extraction (first line)
   const title =
     content
@@ -43,6 +51,7 @@ export async function POST(request: Request) {
       title,
       kind: "entry",
       userId: session.user.id,
+      brainId,
     },
   });
 
