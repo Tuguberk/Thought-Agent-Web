@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Plus, Search, Trash2, FileText, Hash } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { Loader2, Plus, Search, Trash2, FileText, Hash, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmationModal } from "./ui/ConfirmationModal";
 
@@ -104,6 +104,63 @@ export function NoteList({
   const keywords = visibleNotes.filter((n) => n.kind === "keyword");
   const showEmptyState = visibleNotes.length === 0;
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsImporting(true);
+    const notesToImport = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.name.endsWith(".md")) {
+        const text = await file.text();
+        // Simple title extraction: filename without extension
+        const title = file.name.replace(/\.md$/, "");
+        notesToImport.push({ title, content: text });
+      }
+    }
+
+    if (notesToImport.length > 0) {
+      try {
+        const res = await fetch("/api/notes/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: notesToImport })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Trigger refresh
+          // We might need to expose a refresh callback or just rely on parent
+          // But refreshKey is prop. 
+          // Actually NoteList is self-contained for fetching, but it depends on refreshKey from parent to refetch.
+          // We should probably tell parent we updated, but NoteList doesn't have onUpdate prop for list changes?
+          // Wait, createNote calls onSelect(newNote.id).
+          // We should probably just refetch local notes manually or simple window reload for now?
+          // Or better: Re-fetch notes here locally?
+          // The useEffect depends on 'refreshKey'.
+          // We can cheat and run the fetch logic again.
+          const notesRes = await fetch("/api/notes");
+          const notesData = await notesRes.json();
+          setNotes(notesData);
+        }
+      } catch (error) {
+        console.error("Import failed", error);
+      }
+    }
+
+    setIsImporting(false);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const renderNoteItem = (note: Note) => (
     <div
       key={note.id}
@@ -145,13 +202,33 @@ export function NoteList({
       <div className="p-5 flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-bold tracking-tight text-foreground/90">Library</h2>
-          <button
-            onClick={createNote}
-            className="p-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-105 active:scale-95"
-            title="Create new note"
-          >
-            <Plus size={18} strokeWidth={2.5} />
-          </button>
+          <div className="flex gap-1">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              // @ts-expect-error - webkitdirectory is non-standard but supported
+              webkitdirectory=""
+              directory=""
+            />
+            <button
+              onClick={handleImportClick}
+              disabled={isImporting}
+              className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-all disabled:opacity-50"
+              title="Import Markdown Files"
+            >
+              {isImporting ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+            </button>
+            <button
+              onClick={createNote}
+              className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-all"
+              title="New Note"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="relative group">

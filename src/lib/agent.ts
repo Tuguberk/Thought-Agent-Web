@@ -11,6 +11,12 @@ const KEYWORD_BLOCK_REGEX = new RegExp(
 const BRACKET_REGEX = /\[\[([^\[\]]+?)\]\]/g;
 const BRACKET_LINK_PATTERN = /\[\[[^\]]+\]\]/;
 const MAX_SHARED_KEYWORD_LINKS = 12;
+// Threshold for vector similarity (Cosine Distance). Lower is stricter.
+// 0.0 = Identical, 1.0 = Unrelated.
+// For text-embedding-3-small, reasonable relevance is often < 0.6.
+// To avoid garbage linking, we set a stricter threshold.
+const SIMILARITY_THRESHOLD = 0.55;
+
 type LlmTracker = { count: number };
 
 type NoteCategory = "entry" | "keyword";
@@ -656,6 +662,133 @@ export async function processNote(noteId: string, userId: string, previousConten
   } finally {
     console.info(
       `[LLM] processNote ${noteId} completed with ${llmTracker.count} requests`
+    );
+  }
+}
+
+export async function processNoteLight(
+  noteId: string,
+  userId: string,
+  content: string,
+  title?: string
+) {
+  const llmTracker: LlmTracker = { count: 0 };
+  try {
+    const workingContent = stripKeywordBlock(content);
+
+    // 1. Generate Embedding
+    llmTracker.count += 1;
+    const { embedding } = await embed({
+      model: openrouter.embedding("openai/text-embedding-3-small"),
+      value: workingContent,
+    });
+    const embeddingString = `[${embedding.join(",")}]`;
+
+    // 2. Update Note with Embedding (and Title if needed)
+    if (!title || title.trim() === "" || title === "Untitled") {
+      // If we don't have a title, just use embedding. 
+      // Note: Light mode assumes title is usually passed from filename.
+      await prisma.$executeRaw`
+         UPDATE "Note"
+         SET embedding = ${embeddingString}::vector
+         WHERE id = ${noteId}
+       `;
+    } else {
+      await prisma.$executeRaw`
+        UPDATE "Note"
+        SET embedding = ${embeddingString}::vector
+        WHERE id = ${noteId}
+      `;
+    }
+
+    // 3. Extract and Connect Bracket Links
+    const bracketRefs = extractBracketRefs(workingContent);
+    const bracketLinkTargets = new Set<string>();
+
+    if (bracketRefs.length) {
+      const cache = new Map<string, MinimalNote>();
+      const keywordTargets = new Map<string, { label: string; note: MinimalNote }>();
+
+      for (const ref of bracketRefs) {
+        const normalizedRef = ref.toLowerCase();
+        // Ensure the target note exists (as keyword or entry)
+        const target = await ensureLinkedNote(ref, "keyword", cache, userId);
+        if (!target || target.id === noteId) continue;
+
+        const linkType = target.kind === "keyword" ? "keyword" : "bracket";
+        const phrase = `[[${ref}]]`;
+
+        if (linkType === "keyword") {
+          if (!keywordTargets.has(normalizedRef)) {
+            keywordTargets.set(normalizedRef, {
+              label: target.title || ref,
+              note: target,
+            });
+          }
+        } else {
+          bracketLinkTargets.add(target.id);
+        }
+
+        await prisma.link.upsert({
+          where: {
+            sourceId_targetId: { sourceId: noteId, targetId: target.id },
+          },
+          create: {
+            sourceId: noteId,
+            targetId: target.id,
+            type: linkType,
+            matchedPhrase: phrase,
+          },
+          update: { type: linkType, matchedPhrase: phrase },
+        });
+      }
+    }
+
+    // 4. Vector Similarity Linking (Light Mode)
+    // Find top similar notes and link them as 'similarity'
+    try {
+      // Fetch more candidates to filter by threshold
+      const similarNotes = await prisma.$queryRaw<Array<{ id: string; title: string | null; distance: number }>>`
+        SELECT id, title, (embedding <=> ${embeddingString}::vector) as distance
+        FROM "Note"
+        WHERE id != ${noteId}
+        AND embedding IS NOT NULL
+        ORDER BY distance ASC
+        LIMIT 10
+      `;
+
+      for (const similar of similarNotes) {
+        // Filter by relevance threshold
+        if (similar.distance > SIMILARITY_THRESHOLD) continue;
+
+        // Avoid linking if we already have a bracket link to it
+        if (bracketLinkTargets.has(similar.id)) continue;
+
+        await prisma.link.upsert({
+          where: {
+            sourceId_targetId: { sourceId: noteId, targetId: similar.id },
+          },
+          create: {
+            sourceId: noteId,
+            targetId: similar.id,
+            type: "similarity",
+            matchedPhrase: null, // No specific phrase for pure vector match
+          },
+          update: {
+            type: "similarity",
+            // Don't overwrite matchedPhrase if it exists
+          },
+        });
+      }
+    } catch (vectorError) {
+      console.error("Vector similarity search failed in light mode:", vectorError);
+    }
+
+  } catch (error) {
+    console.error("Error processing note (light):", error);
+  } finally {
+    console.info(
+      `[LLM] processNoteLight ${noteId} completed with ${llmTracker.count} requests`
     );
   }
 }

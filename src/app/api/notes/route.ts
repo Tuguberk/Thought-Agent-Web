@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   // We await it to ensure the graph is updated before returning,
   // though in a real app this should be backgrounded.
   if (content.trim()) {
-    await processNote(note.id);
+    await processNote(note.id, session.user.id);
   }
 
   return NextResponse.json(note);
