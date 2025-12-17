@@ -41,6 +41,18 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { auth } = await import("@/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.credits <= 0) {
+    return new NextResponse("Insufficient credits", { status: 402 });
+  }
+
   const { id } = await params;
   const { content, title } = await request.json();
 
@@ -66,15 +78,10 @@ export async function PUT(
     data: { content, title: finalTitle },
   });
 
-  const { auth } = await import("@/auth");
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    // If no user, we can't process the note with user ID. 
-    // For now, let's just skip processing or throw error. 
-    // Given this is a PUT on an existing note, the user should be authenticated.
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { credits: { decrement: 1 } },
+  });
 
   await processNote(id, session.user.id, existing.content);
 

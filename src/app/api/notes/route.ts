@@ -37,6 +37,11 @@ export async function POST(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.credits <= 0) {
+    return new NextResponse("Insufficient credits", { status: 402 });
+  }
+
   const { content, brainId } = await request.json();
   // Simple title extraction (first line)
   const title =
@@ -53,6 +58,11 @@ export async function POST(request: Request) {
       userId: session.user.id,
       brainId,
     },
+  });
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { credits: { decrement: 1 } },
   });
 
   // Trigger Agent

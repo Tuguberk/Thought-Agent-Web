@@ -20,9 +20,21 @@ export async function POST(request: Request) {
         }
 
         const userId = session.user.id;
+        const totalCost = notes.length;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+
+        if (!user || user.credits < totalCost) {
+            return NextResponse.json(
+                { error: `Insufficient credits. You need ${totalCost} but have ${user?.credits ?? 0}.` },
+                { status: 402 }
+            );
+        }
+
         let successCount = 0;
         let skipCount = 0;
         let failedCount = 0;
+
+        const importedIds: string[] = [];
 
         // Process sequentially to be safe with DB connections and rate limits
         // Parallelizing with a limit (e.g., p-limit) could be an optimization later
@@ -60,6 +72,8 @@ export async function POST(request: Request) {
                     }
                 });
 
+                importedIds.push(created.id);
+
                 if (notes.length < 5) {
                     await processNote(created.id, userId);
                 } else {
@@ -76,8 +90,16 @@ export async function POST(request: Request) {
             }
         }
 
+        if (successCount > 0) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: { credits: { decrement: successCount } }
+            });
+        }
+
         return NextResponse.json({
             success: true,
+            importedIds,
             stats: { imported: successCount, skipped: skipCount, failed: failedCount }
         });
 

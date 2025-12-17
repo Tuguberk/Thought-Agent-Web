@@ -44,9 +44,12 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
                 <User size={16} />
               </div>
             )}
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium leading-none max-w-[120px] truncate">{session.user?.name || "User"}</span>
-              <span className="text-xs text-muted-foreground max-w-[120px] truncate">{session.user?.email || ""}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{(session.user as any).credits ?? 0} Credits</span>
+                <Link href="/credits" className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded hover:bg-primary/30 transition-colors font-medium">Buy</Link>
+              </div>
             </div>
           </div>
           <button
@@ -63,6 +66,7 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
             refreshKey={refreshKey}
             onSelect={handleNavigate}
             brainId={brainId}
+            onNoteUpdate={handleNoteUpdate}
           />
         </div>
       </div>
@@ -72,7 +76,7 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
         {!selectedNoteId ? (
           // Full Screen Graph Mode (No Note Selected)
           <div className="flex-1 relative bg-gray-900/50 backdrop-blur-xl">
-            <GraphView onNodeClick={handleNavigate} selectedNodeId={null} brainId={brainId} />
+            <GraphView onNodeClick={handleNavigate} selectedNodeId={null} brainId={brainId} refreshKey={refreshKey} />
             <div className="pointer-events-none absolute bottom-12 left-12 max-w-md animate-fadeIn z-10">
               <h1 className="text-4xl font-bold text-white/90 mb-4 font-serif tracking-tight">Thought Agent</h1>
               <p className="text-lg text-white/60 leading-relaxed">
@@ -101,7 +105,7 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
             {isGraphVisible && (
               <ResizablePanel id="graph-panel" defaultSize={40} minSize={28} order={2} className="bg-gray-900/50 backdrop-blur-xl relative border-l border-white/5">
                 <div className="w-full h-full relative overflow-hidden">
-                  <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} />
+                  <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} refreshKey={refreshKey} />
                 </div>
               </ResizablePanel>
             )}

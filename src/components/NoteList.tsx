@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Loader2, Plus, Search, Trash2, FileText, Hash, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmationModal } from "./ui/ConfirmationModal";
+import { AlertModal } from "./ui/AlertModal";
 
 interface Note {
   id: string;
@@ -17,17 +18,20 @@ export function NoteList({
   selectedId,
   refreshKey,
   brainId,
+  onNoteUpdate,
 }: {
   onSelect: (id: string | null, mode?: "edit" | "preview") => void;
   selectedId: string | null;
   refreshKey?: number;
   brainId: string;
+  onNoteUpdate: () => void;
 }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchResults, setSearchResults] = useState<Note[]>([]);
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, message: string }>({ isOpen: false, message: "" });
 
   useEffect(() => {
     let isMounted = true;
@@ -76,9 +80,16 @@ export function NoteList({
       method: "POST",
       body: JSON.stringify({ content: "", brainId }),
     });
+
+    if (res.status === 402) {
+      setAlertConfig({ isOpen: true, message: "Insufficient credits to create a new note. Please top up your credits." });
+      return;
+    }
+
     const newNote = await res.json();
     setNotes([newNote, ...notes]);
     onSelect(newNote.id, "edit");
+    onNoteUpdate();
   };
 
   const confirmDelete = async () => {
@@ -94,6 +105,7 @@ export function NoteList({
       onSelect(null);
     }
     setNoteToDelete(null);
+    onNoteUpdate();
   };
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
@@ -139,6 +151,14 @@ export function NoteList({
           body: JSON.stringify({ notes: notesToImport, brainId })
         });
         const data = await res.json();
+
+        if (res.status === 402) {
+          setAlertConfig({ isOpen: true, message: data.error || "Insufficient credits to import notes. Please top up your credits." });
+          setIsImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
         if (data.success) {
           // Trigger refresh
           // We might need to expose a refresh callback or just rely on parent
@@ -153,6 +173,11 @@ export function NoteList({
           const notesRes = await fetch(`/api/notes?brainId=${brainId}`);
           const notesData = await notesRes.json();
           setNotes(notesData);
+          onNoteUpdate();
+
+          if (data.importedIds && data.importedIds.length > 0) {
+            onSelect(data.importedIds[0], "preview");
+          }
         }
       } catch (error) {
         console.error("Import failed", error);
@@ -293,6 +318,14 @@ export function NoteList({
         onConfirm={confirmDelete}
         title="Delete Note"
         description="Are you sure you want to delete this note? This action cannot be undone and the note will be permanently removed from your library."
+      />
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title="Insufficient Credits"
+        description={alertConfig.message}
+        actionLabel="Top Up"
+        actionLink="/credits"
       />
     </div >
   );

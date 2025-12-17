@@ -5,6 +5,7 @@ import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import { Save, Loader2, ArrowRight, ArrowLeft, Hash, ExternalLink, Eye, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmationModal } from "./ui/ConfirmationModal";
+import { AlertModal } from "./ui/AlertModal";
 
 interface Note {
   id: string;
@@ -51,6 +52,7 @@ export function NoteEditor({
   const [noteDirectory, setNoteDirectory] = useState<NoteDirectoryEntry[]>([]);
   const [viewMode, setViewMode] = useState<"edit" | "preview">("preview");
   const [linkToDelete, setLinkToDelete] = useState<{ sourceId: string; targetId: string } | null>(null);
+  const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, message: string }>({ isOpen: false, message: "" });
 
   useEffect(() => {
     let isMounted = true;
@@ -116,10 +118,16 @@ export function NoteEditor({
   const handleSave = async () => {
     if (!noteId) return;
     setIsSaving(true);
-    await fetch(`/api/notes/${noteId}`, {
+    const resUpdate = await fetch(`/api/notes/${noteId}`, {
       method: "PUT",
       body: JSON.stringify({ content, title }),
     });
+
+    if (resUpdate.status === 402) {
+      setAlertConfig({ isOpen: true, message: "Insufficient credits to save changes. Please top up your credits." });
+      setIsSaving(false);
+      return;
+    }
 
     const res = await fetch(`/api/notes/${noteId}`);
     const data = await res.json();
@@ -490,12 +498,21 @@ export function NoteEditor({
                 linksTo: prev.linksTo.filter((l) => l.source.id !== linkToDelete.sourceId || prev.id !== linkToDelete.targetId),
               };
             });
+            if (onNoteUpdate) onNoteUpdate();
           } catch (error) {
             console.error("Failed to delete link", error);
           }
         }}
         title="Remove Connection"
         description="Are you sure you want to remove this link? This action cannot be undone."
+      />
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title="Insufficient Credits"
+        description={alertConfig.message}
+        actionLabel="Top Up"
+        actionLink="/credits"
       />
     </div>
   );

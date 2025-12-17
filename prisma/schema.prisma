@@ -15,10 +15,12 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  credits       Int       @default(5)
   accounts      Account[]
   sessions      Session[]
   notes         Note[]
   brains        Brain[]
+  couponRedemptions CouponRedemption[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -111,4 +113,25 @@ model Link {
   target Note @relation("TargetLinks", fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([sourceId, targetId])
+}
+
+model Coupon {
+  id          String             @id @default(cuid())
+  code        String             @unique
+  credits     Int
+  maxUses     Int
+  usedCount   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  redemptions CouponRedemption[]
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, couponId])
 }

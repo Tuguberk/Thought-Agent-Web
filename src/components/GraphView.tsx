@@ -36,11 +36,13 @@ export function GraphView({
   selectedNodeId,
   staticData,
   brainId,
+  refreshKey,
 }: {
   onNodeClick: (id: string) => void;
   selectedNodeId?: string | null;
   staticData?: GraphDataResponse;
   brainId?: string;
+  refreshKey?: number;
 }) {
   const [data, setData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
     nodes: [],
@@ -58,6 +60,11 @@ export function GraphView({
   const [error, setError] = useState<string | null>(null);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const [isGraphReady, setIsGraphReady] = useState(false);
+
+  // Debug refreshKey
+  useEffect(() => {
+    console.log("GraphView mounted or updated, refreshKey:", refreshKey);
+  }, [refreshKey]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -153,7 +160,7 @@ export function GraphView({
     return () => {
       isMounted = false;
     };
-  }, [hideLonelyKeywords, staticData, brainId]);
+  }, [hideLonelyKeywords, staticData, brainId, refreshKey]);
 
   useEffect(() => {
     if (!containerRef.current) return;
