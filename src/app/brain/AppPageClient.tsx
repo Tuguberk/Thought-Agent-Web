@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { NoteList } from "@/components/NoteList";
 import { NoteEditor } from "@/components/NoteEditor";
 import { GraphView } from "@/components/GraphView";
-import { Network, PanelRightClose, PanelRightOpen, Layout, LayoutGrid } from "lucide-react";
+import { Network, PanelRightClose, PanelRightOpen, Layout, LayoutGrid, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { signOut } from "next-auth/react";
@@ -16,7 +16,8 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [isGraphVisible, setIsGraphVisible] = useState(true);
+  // Mobile sidebar visibility state
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<"edit" | "preview">("preview");
 
   const handleNoteUpdate = useCallback(() => {
@@ -29,10 +30,30 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
   }, []);
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-      {/* Sidebar - Note List */}
-      <div className="w-70 shrink-0 z-20 shadow-xl shadow-black/5 flex flex-col bg-background border-r border-white/5">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-card/50 backdrop-blur-md">
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden flex-col md:flex-row">
+      {/* Mobile Header / Hamburger */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-[60px] bg-background/80 backdrop-blur-md border-b border-white/5 flex items-center px-4 justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:text-foreground"
+          >
+            <Menu size={24} />
+          </button>
+          <span className="font-serif font-bold text-lg tracking-tight">Thought Agent</span>
+        </div>
+      </div>
+
+      {/* Sidebar - Note List (Responsive) */}
+      <div className={cn(
+        "flex flex-col bg-background border-r border-white/5 z-40 transition-all duration-300 ease-in-out",
+        // Desktop styles
+        "md:w-70 md:translate-x-0 md:static md:h-full md:shrink-0",
+        // Mobile styles (Absolute overlay)
+        "fixed inset-y-0 left-0 w-[85vw] max-w-[320px] shadow-2xl shadow-black",
+        mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
+        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-card/50 backdrop-blur-md mt-[60px] md:mt-0">
           <div className="flex items-center gap-3">
             <Link href="/brain" className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors" title="Back to Brains">
               <LayoutGrid size={18} />
@@ -64,20 +85,34 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
           <NoteList
             selectedId={selectedNoteId}
             refreshKey={refreshKey}
-            onSelect={handleNavigate}
+            onSelect={(id, mode) => {
+              handleNavigate(id, mode);
+              // On mobile, close sidebar after selection
+              if (window.innerWidth < 768) {
+                setMobileSidebarOpen(false);
+              }
+            }}
             brainId={brainId}
             onNoteUpdate={handleNoteUpdate}
           />
         </div>
       </div>
 
+      {/* Mobile Overlay (Background Dim) */}
+      {mobileSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-[2px]"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content Area */}
-      <div className="flex-1 flex min-w-0 relative">
+      <div className="flex-1 flex min-w-0 relative pt-[60px] md:pt-0 h-full">
         {!selectedNoteId ? (
           // Full Screen Graph Mode (No Note Selected)
-          <div className="flex-1 relative bg-gray-900/50 backdrop-blur-xl">
+          <div className="flex-1 relative bg-gray-900/50 backdrop-blur-xl h-full">
             <GraphView onNodeClick={handleNavigate} selectedNodeId={null} brainId={brainId} refreshKey={refreshKey} />
-            <div className="pointer-events-none absolute bottom-12 left-12 max-w-md animate-fadeIn z-10">
+            <div className="pointer-events-none absolute bottom-12 left-12 max-w-md animate-fadeIn z-10 hidden md:block">
               <h1 className="text-4xl font-bold text-white/90 mb-4 font-serif tracking-tight">Thought Agent</h1>
               <p className="text-lg text-white/60 leading-relaxed">
                 Select a node to explore your thoughts, or create a new note from the sidebar.
@@ -86,9 +121,35 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
           </div>
         ) : (
           // Split View Mode (Note Selected)
-          <ResizablePanelGroup direction="horizontal" className="flex-1">
-            {/* Editor Panel */}
-            <ResizablePanel id="editor-panel" defaultSize={60} minSize={40} order={1} className="bg-background flex flex-col relative z-10">
+          <>
+            {/* Desktop: Resizable Split */}
+            <div className="hidden md:flex flex-1 h-full">
+              <ResizablePanelGroup direction="horizontal" className="flex-1">
+                {/* Editor Panel */}
+                <ResizablePanel id="editor-panel" defaultSize={60} minSize={40} order={1} className="bg-background flex flex-col relative z-10">
+                  <NoteEditor
+                    noteId={selectedNoteId}
+                    onNoteUpdate={handleNoteUpdate}
+                    onNavigate={handleNavigate}
+                    onClose={() => setSelectedNoteId(null)}
+                    initialMode={editorMode}
+                    brainId={brainId}
+                  />
+                </ResizablePanel>
+
+                <ResizableHandle className="w-1 bg-white/5 hover:bg-primary/50 transition-colors" />
+
+                {/* Graph Panel (Sidebar Mode) */}
+                <ResizablePanel id="graph-panel" defaultSize={40} minSize={28} order={2} className="bg-gray-900/50 backdrop-blur-xl relative border-l border-white/5">
+                  <div className="w-full h-full relative overflow-hidden">
+                    <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} refreshKey={refreshKey} />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+
+            {/* Mobile: Stacked / Switchable */}
+            <div className="md:hidden flex-1 h-full flex flex-col relative">
               <NoteEditor
                 noteId={selectedNoteId}
                 onNoteUpdate={handleNoteUpdate}
@@ -97,19 +158,8 @@ export default function AppClient({ session, brainId }: { session: any, brainId:
                 initialMode={editorMode}
                 brainId={brainId}
               />
-            </ResizablePanel>
-
-            {isGraphVisible && <ResizableHandle className="w-1 bg-white/5 hover:bg-primary/50 transition-colors" />}
-
-            {/* Graph Panel (Sidebar Mode) */}
-            {isGraphVisible && (
-              <ResizablePanel id="graph-panel" defaultSize={40} minSize={28} order={2} className="bg-gray-900/50 backdrop-blur-xl relative border-l border-white/5">
-                <div className="w-full h-full relative overflow-hidden">
-                  <GraphView onNodeClick={handleNavigate} selectedNodeId={selectedNoteId} brainId={brainId} refreshKey={refreshKey} />
-                </div>
-              </ResizablePanel>
-            )}
-          </ResizablePanelGroup>
+            </div>
+          </>
         )}
       </div>
     </div>

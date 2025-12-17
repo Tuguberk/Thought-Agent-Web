@@ -227,16 +227,25 @@ export function NoteEditor({
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative selection:bg-primary/20">
       {/* Toolbar */}
-      <div className="shrink-0 h-16 border-b border-white/5 flex items-center justify-between px-6 bg-background/80 backdrop-blur-md sticky top-0 z-20 gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="shrink-0 h-14 md:h-16 border-b border-white/5 flex items-center justify-between px-3 md:px-6 bg-background/80 backdrop-blur-md sticky top-0 z-20 gap-2 md:gap-4 transition-all">
+        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="md:hidden p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all"
+              title="Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          )}
           {note.kind === "keyword" && (
             <div className="flex flex-col items-end shrink-0">
               <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full flex gap-1 items-center">
-                <Hash size={10} /> Keyword
+                <Hash size={10} /> <span className="hidden sm:inline">Keyword</span>
               </span>
               {isGenerating && (
                 <span className="text-[9px] text-muted-foreground animate-pulse mt-0.5">
-                  AI Generating...
+                  Generating...
                 </span>
               )}
             </div>
@@ -245,37 +254,39 @@ export function NoteEditor({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 bg-transparent text-xl font-bold text-foreground placeholder:text-muted-foreground/40 focus:outline-none font-serif tracking-tight min-w-0 truncate"
+            className="flex-1 bg-transparent text-lg md:text-xl font-bold text-foreground placeholder:text-muted-foreground/40 focus:outline-none font-serif tracking-tight min-w-0 truncate"
             placeholder="Untitled Note"
           />
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           {/* View Toggle */}
           <div className="flex p-0.5 bg-secondary/50 rounded-lg border border-white/5">
             <button
               onClick={() => setViewMode("edit")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
+                "px-2 md:px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
                 viewMode === "edit"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-white/5"
               )}
+              title="Edit"
             >
               <PenLine size={12} />
-              <span>Edit</span>
+              <span className="hidden sm:inline">Edit</span>
             </button>
             <button
               onClick={() => setViewMode("preview")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
+                "px-2 md:px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all duration-200",
                 viewMode === "preview"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-white/5"
               )}
+              title="Preview"
             >
               <Eye size={12} />
-              <span>Preview</span>
+              <span className="hidden sm:inline">Preview</span>
             </button>
           </div>
 
@@ -283,20 +294,20 @@ export function NoteEditor({
             onClick={handleSave}
             disabled={isSaving}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+              "flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
               isSaving
                 ? "bg-secondary text-muted-foreground cursor-wait"
                 : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
             )}
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            <span>{isSaving ? "Saving" : "Save"}</span>
+            <span className="hidden sm:inline">{isSaving ? "Saving" : "Save"}</span>
           </button>
 
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all ml-1"
+              className="hidden md:block p-2 rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all ml-1"
               title="Close"
             >
               <X size={18} />
