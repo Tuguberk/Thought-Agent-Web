@@ -36,7 +36,6 @@ export function GraphView({
   selectedNodeId,
   staticData,
   brainId,
-  refreshKey,
 }: {
   onNodeClick: (id: string) => void;
   selectedNodeId?: string | null;
@@ -60,11 +59,6 @@ export function GraphView({
   const [error, setError] = useState<string | null>(null);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const [isGraphReady, setIsGraphReady] = useState(false);
-
-  // Debug refreshKey
-  useEffect(() => {
-    console.log("GraphView mounted or updated, refreshKey:", refreshKey);
-  }, [refreshKey]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

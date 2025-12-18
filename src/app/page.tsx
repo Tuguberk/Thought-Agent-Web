@@ -20,6 +20,9 @@ export default async function LandingPage() {
                         Thought Agent
                     </div>
                     <div className="flex items-center gap-6">
+                        <Link href="/blog" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                            Blog
+                        </Link>
                         {!session ? (
                             <form action={async () => {
                                 "use server"
@@ -160,6 +163,7 @@ export default async function LandingPage() {
                         <span>© 2024 Thought Agent Inc.</span>
                     </div>
                     <div className="flex gap-8 text-sm text-muted-foreground">
+                        <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
                         <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
                         <a href="#" className="hover:text-foreground transition-colors">Terms</a>
                         <a href="#" className="hover:text-foreground transition-colors">Twitter</a>

@@ -135,3 +135,15 @@ model CouponRedemption {
 
   @@unique([userId, couponId])
 }
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String
+  summary   String?
+  keywords  String[]
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
