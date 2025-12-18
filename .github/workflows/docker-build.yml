@@ -1,4 +1,20 @@
-steps:
+name: Docker Build and Push to GHCR
+
+# Sadece push (veya isteğe bağlı pull_request) olduğunda çalışır
+on:
+  push:
+    branches: [ "main" ] # Burayı kendi ana branch adınıza göre değiştirebilirsiniz
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    # GHCR'ye yazma izni vermek için gerekli izinler
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
