@@ -5,17 +5,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = process.env.NEXTAUTH_URL || 'https://thought-agent.com' // Should be env var
 
     // Get all blog posts
-    const posts = await prisma.blogPost.findMany({
-        where: { published: true },
-        select: { slug: true, updatedAt: true },
-    })
+    let blogUrls: MetadataRoute.Sitemap = [];
+    try {
+        const posts = await prisma.blogPost.findMany({
+            where: { published: true },
+            select: { slug: true, updatedAt: true },
+        })
 
-    const blogUrls = posts.map((post) => ({
-        url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: post.updatedAt,
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-    }))
+        blogUrls = posts.map((post) => ({
+            url: `${baseUrl}/blog/${post.slug}`,
+            lastModified: post.updatedAt,
+            changeFrequency: 'weekly' as const,
+            priority: 0.7,
+        }))
+    } catch (e) {
+        console.warn("Could not fetch blog posts for sitemap (likely during build). Returning static routes only.");
+    }
 
     return [
         {

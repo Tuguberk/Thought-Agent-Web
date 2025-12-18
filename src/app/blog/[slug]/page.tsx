@@ -35,8 +35,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export async function generateStaticParams() {
-    const posts = await prisma.blogPost.findMany({ select: { slug: true } });
-    return posts.map((post) => ({ slug: post.slug }));
+    try {
+        const posts = await prisma.blogPost.findMany({ select: { slug: true } });
+        return posts.map((post) => ({ slug: post.slug }));
+    } catch (e) {
+        console.warn("Could not fetch blog posts for static generation (likely during build without DB access). Skipping pre-rendering.");
+        return [];
+    }
 }
 
 export const revalidate = 3600;

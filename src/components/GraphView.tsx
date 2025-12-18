@@ -36,6 +36,7 @@ export function GraphView({
   selectedNodeId,
   staticData,
   brainId,
+  refreshKey,
 }: {
   onNodeClick: (id: string) => void;
   selectedNodeId?: string | null;
