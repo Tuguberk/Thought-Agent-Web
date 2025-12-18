@@ -27,6 +27,9 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# BUILD AŞAMASI İÇİN GEÇİCİ DEĞİŞKEN
+# Prisma generate gerçek bir veritabanına bağlanmaz, sadece formatı kontrol eder.
+ENV DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
 # Run prisma generate to create the client with the correct binary targets
 RUN npx prisma generate
 
