@@ -1,24 +1,12 @@
-name: Docker Build and Push to GHCR
-
-# Sadece push (veya isteğe bağlı pull_request) olduğunda çalışır
-on:
-  push:
-    branches: [ "main" ] # Burayı kendi ana branch adınıza göre değiştirebilirsiniz
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    
-    # GHCR'ye yazma izni vermek için gerekli izinler
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
+steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # GitHub'ın kendi sağladığı geçici token ile GHCR'ye giriş yapar
+      # 1. ADIM: İsimdeki büyük harfleri küçük harfe çevirip bir değişkene atıyoruz
+      - name: Lowercase repo name
+        run: |
+          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -26,13 +14,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # İmajı build eder ve GHCR'ye gönderir
+      # 2. ADIM: Build kısmında ${{ env.IMAGE_NAME }} kullanıyoruz
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # İmaj ismi: ghcr.io/kullanici_adi/depo_adi:latest
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
