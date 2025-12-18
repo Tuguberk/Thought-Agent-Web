@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/thought
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
